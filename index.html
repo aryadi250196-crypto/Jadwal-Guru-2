@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Papan Jadwal Guru</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1B2A38" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Jadwal Guru" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
+  * { box-sizing: border-box; }
+  body { margin:0; }
+  html, body { background:#1B2A38; }
+  body { font-family:'Inter',-apple-system,sans-serif; color:#F5F2E9; }
+  input, select, textarea, button { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color:#8FA3B3; }
+  .chalk-btn:hover { filter:brightness(1.12); transform:translateY(-1px); }
+  .chalk-card:hover { border-color:#E8B94E55; }
+  ::-webkit-scrollbar { width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb { background:#35516655; border-radius:8px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spin { animation:spin 1s linear infinite; display:inline-block; }
+
+  .app { min-height:100vh; display:flex; flex-direction:column; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; padding:24px 24px 16px; border-bottom:1px dashed #35516699; gap:12px; flex-wrap:wrap; }
+  .chalk-title { font-family:'Caveat',cursive; font-size:38px; font-weight:700; line-height:1; }
+  .sub-title { font-size:13px; color:#8FA3B3; margin-top:6px; }
+  .badge { display:flex; align-items:center; gap:6px; font-size:12px; color:#8FA3B3; background:#223648; padding:6px 10px; border-radius:8px; height:fit-content; }
+  .tab-bar { display:flex; gap:6px; padding:12px 24px; flex-wrap:wrap; border-bottom:1px solid #22364888; }
+  .tab-btn { display:flex; align-items:center; gap:6px; background:transparent; border:1px solid #35516688; color:#8FA3B3; padding:8px 14px; border-radius:20px; cursor:pointer; font-size:13.5px; transition:all .15s ease; }
+  .tab-btn.active { background:#E8B94E; color:#1B2A38; border-color:#E8B94E; font-weight:600; }
+  .main { flex:1; padding:20px 24px 40px; max-width:1000px; width:100%; margin:0 auto; }
+  .error-box, .info-box { display:flex; gap:8px; align-items:center; padding:10px 14px; border-radius:10px; margin-bottom:16px; font-size:13.5px; }
+  .error-box { background:#3A2430; color:#F5A9A9; }
+  .info-box { background:#20303f; color:#9FD3B8; border:1px solid #6FBF9E44; }
+  .section-title { font-size:16px; font-weight:600; margin:18px 0 12px; }
+  .row-between { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .empty-state { text-align:center; padding:50px 20px; color:#8FA3B3; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .card-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; margin-top:8px; }
+  .card { background:#223648; border:1px solid #35516655; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px; }
+  .card-top { display:flex; align-items:center; gap:10px; }
+  .avatar { width:38px; height:38px; border-radius:50%; background:#35516699; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Caveat',cursive; font-size:20px; color:#E8B94E; flex-shrink:0; }
+  .card-name { font-weight:600; font-size:14.5px; }
+  .card-sub { font-size:12.5px; color:#8FA3B3; display:flex; align-items:center; gap:4px; margin-top:2px; }
+  .card-detail { font-size:13px; color:#C7D3DC; display:flex; align-items:center; gap:6px; }
+  .wa-btn { margin-top:6px; display:flex; align-items:center; justify-content:center; gap:6px; background:#6FBF9E; color:#0F1E19; border:none; padding:9px 12px; border-radius:10px; font-weight:600; cursor:pointer; font-size:13.5px; width:100%; }
+  .primary-btn { display:flex; align-items:center; gap:6px; background:#E8B94E; color:#1B2A38; border:none; padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer; font-size:13.5px; }
+  .ghost-btn { display:flex; align-items:center; gap:6px; background:transparent; color:#8FA3B3; border:1px solid #35516688; padding:10px 16px; border-radius:10px; cursor:pointer; font-size:13.5px; }
+  .icon-btn { background:transparent; border:none; color:#8FA3B3; cursor:pointer; padding:6px; }
+  .icon-btn.danger { color:#E1633D; }
+  .form-card { background:#223648; border:1px dashed #35516688; border-radius:14px; padding:18px; margin-bottom:8px; }
+  .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
+  .form-actions { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .field { background:#1B2A38; border:1px solid #35516688; border-radius:8px; padding:10px 12px; color:#F5F2E9; font-size:13.5px; width:100%; }
+  textarea.field { resize:vertical; }
+  .help-text { font-size:12.5px; color:#8FA3B3; margin-bottom:10px; }
+  .form-error { display:flex; align-items:center; gap:6px; color:#F5A9A9; font-size:12.5px; margin-top:10px; }
+  .list { display:flex; flex-direction:column; gap:8px; }
+  .list-row { display:flex; align-items:center; gap:12px; background:#223648; border:1px solid #35516655; border-radius:10px; padding:10px 14px; }
+  .day-label { font-family:'Caveat',cursive; font-size:22px; color:#E8B94E; margin-bottom:6px; }
+  .preview-box { white-space:pre-wrap; background:#223648; border:1px solid #35516655; border-radius:12px; padding:16px; font-size:13.5px; color:#C7D3DC; line-height:1.6; }
+  .footer { padding:14px 24px 22px; font-size:12px; color:#5F7E93; border-top:1px dashed #35516699; text-align:center; }
+  .toggle-row { display:flex; align-items:center; justify-content:space-between; gap:12px; background:#1B2A38; border:1px solid #35516688; border-radius:10px; padding:12px 14px; }
+  .switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; inset:0; background:#35516688; border-radius:999px; cursor:pointer; transition:.15s; }
+  .slider:before { content:""; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#F5F2E9; border-radius:50%; transition:.15s; }
+  input:checked + .slider { background:#6FBF9E; }
+  input:checked + .slider:before { transform:translateX(20px); }
+  .log-box { max-height:180px; overflow-y:auto; background:#1B2A38; border:1px solid #35516655; border-radius:10px; padding:10px; font-size:12.5px; color:#8FA3B3; }
+  .log-item { padding:6px 0; border-bottom:1px dashed #35516655; }
+  .log-item:last-child { border-bottom:none; }
+  .pending-banner { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; background:#2E4A2E; border:1px solid #6FBF9E88; border-radius:12px; padding:14px 16px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ===================== Data & util =====================
+const HARI_LIST = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+const HARI_BY_JSDAY = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+
+const DEFAULT_TEMPLATE =
+  "Assalamu'alaikum/Selamat pagi Bapak/Ibu {nama} \uD83D\uDE4F\n\n" +
+  "Ini pengingat jadwal mengajar hari ini, {hari}:\n" +
+  "\uD83D\uDCDA Mapel: {mapel}\n" +
+  "\uD83C\uDFEB Kelas: {kelas}\n" +
+  "\uD83D\uDD50 Jam: {jam}\n" +
+  "\uD83D\uDCCD Ruang: {ruang}\n\n" +
+  "Mohon dipersiapkan, terima kasih.";
+
+const STORAGE_KEY = "jadwal-guru-data-v2";
+const uid = () => Math.random().toString(36).slice(2,10);
+const pad2 = (n) => String(n).padStart(2,"0");
+const todayKey = () => { const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+const nowHHMM = () => { const d=new Date(); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
+function normalizePhone(raw){
+  let n=(raw||"").replace(/[^0-9+]/g,"");
+  if(n.startsWith("+62")) n=n.slice(1);
+  else if(n.startsWith("0")) n="62"+n.slice(1);
+  else if(n.startsWith("8")) n="62"+n;
+  return n;
+}
+function buildMessage(template,guru,jadwal,hari){
+  return template
+    .replaceAll("{nama}", guru.nama||"")
+    .replaceAll("{mapel}", guru.mapel||"")
+    .replaceAll("{hari}", hari||"")
+    .replaceAll("{jam}", `${jadwal.jamMulai}\u2013${jadwal.jamSelesai}`)
+    .replaceAll("{kelas}", jadwal.kelas||"")
+    .replaceAll("{ruang}", jadwal.ruang||"-");
+}
+function waLink(guru,jadwal,hari,template){
+  const phone = normalizePhone(guru.noHp);
+  const text = buildMessage(template,guru,jadwal,hari);
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function saveState(state){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  }catch(e){ return false; }
+}
+
+const emptyGuru = { nama:"", noHp:"", mapel:"" };
+const emptyJadwal = { guruId:"", hari:"Senin", jamMulai:"07:00", jamSelesai:"08:30", kelas:"", ruang:"" };
+
+let state = loadState() || {
+  guru: [], jadwal: [], template: DEFAULT_TEMPLATE,
+  auto: { enabled:false, offsetMinutes:0 },
+  firedLog: {} // { "jadwalId|tanggal": true }
+};
+if(!state.auto) state.auto = { enabled:false, offsetMinutes:0 };
+if(!state.firedLog) state.firedLog = {};
+
+let ui = {
+  tab: "dashboard",
+  guruForm: {...emptyGuru}, editingGuruId: null, guruFormError: "",
+  jadwalForm: {...emptyJadwal}, editingJadwalId: null, jadwalFormError: "",
+  templateDraft: state.template,
+  saved: true,
+  pending: [], // jadwal siap kirim otomatis tapi menunggu tap (karena browser blokir popup)
+  notifPermission: (typeof Notification!=="undefined") ? Notification.permission : "unsupported",
+  autoLog: []
+};
+
+function persist(){
+  ui.saved = saveState(state);
+  render();
+}
+
+// ===================== Icons (inline SVG, ringan) =====================
+const ICON = {
+  calendar: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  users: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  clock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  bell: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  send: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>',
+  plus: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>',
+  x: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>',
+  pencil: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+  trash: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>',
+  msg: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+  warn: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  book: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  pin: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+};
+
+function esc(s){ const d=document.createElement("div"); d.textContent = s==null?"":String(s); return d.innerHTML; }
+
+// ===================== Guru CRUD =====================
+function submitGuru(){
+  const f = ui.guruForm;
+  if(!f.nama.trim()){ ui.guruFormError="Nama guru wajib diisi."; render(); return; }
+  if(!f.noHp.trim()){ ui.guruFormError="Nomor WhatsApp wajib diisi."; render(); return; }
+  const normalized = normalizePhone(f.noHp);
+  if(normalized.length < 9){ ui.guruFormError="Nomor WhatsApp tidak valid. Contoh: 08123456789."; render(); return; }
+  ui.guruFormError = "";
+  if(ui.editingGuruId){
+    state.guru = state.guru.map(g => g.id===ui.editingGuruId ? {...g,...f} : g);
+  } else {
+    state.guru = [...state.guru, { id:uid(), ...f }];
+  }
+  ui.guruForm = {...emptyGuru};
+  ui.editingGuruId = null;
+  persist();
+}
+function editGuru(id){
+  const g = state.guru.find(x=>x.id===id);
+  if(!g) return;
+  ui.editingGuruId = id;
+  ui.guruForm = { nama:g.nama, noHp:g.noHp, mapel:g.mapel };
+  render();
+}
+function cancelGuru(){ ui.editingGuruId=null; ui.guruForm={...emptyGuru}; ui.guruFormError=""; render(); }
+function deleteGuru(id){
+  state.guru = state.guru.filter(g=>g.id!==id);
+  state.jadwal = state.jadwal.filter(j=>j.guruId!==id);
+  persist();
+}
+
+// ===================== Jadwal CRUD =====================
+function submitJadwal(){
+  const f = ui.jadwalForm;
+  if(!f.guruId){ ui.jadwalFormError="Pilih guru terlebih dahulu."; render(); return; }
+  if(!f.kelas.trim()){ ui.jadwalFormError="Kelas wajib diisi."; render(); return; }
+  ui.jadwalFormError = "";
+  if(ui.editingJadwalId){
+    state.jadwal = state.jadwal.map(j => j.id===ui.editingJadwalId ? {...j,...f} : j);
+  } else {
+    state.jadwal = [...state.jadwal, { id:uid(), ...f }];
+  }
+  ui.jadwalForm = {...emptyJadwal};
+  ui.editingJadwalId = null;
+  persist();
+}
+function editJadwal(id){
+  const j = state.jadwal.find(x=>x.id===id);
+  if(!j) return;
+  ui.editingJadwalId = id;
+  ui.jadwalForm = { guruId:j.guruId, hari:j.hari, jamMulai:j.jamMulai, jamSelesai:j.jamSelesai, kelas:j.kelas, ruang:j.ruang };
+  render();
+}
+function cancelJadwal(){ ui.editingJadwalId=null; ui.jadwalForm={...emptyJadwal}; ui.jadwalFormError=""; render(); }
+function deleteJadwal(id){
+  state.jadwal = state.jadwal.filter(j=>j.id!==id);
+  persist();
+}
+function guruById(id){ return state.guru.find(g=>g.id===id); }
+
+function saveTemplate(){
+  state.template = ui.templateDraft;
+  persist();
+}
+
+// ===================== Kirim WA =====================
+function kirimWA(guru, jadwal, hari, viaUserClick){
+  if(!guru) return;
+  const url = waLink(guru, jadwal, hari, state.template);
+  const win = window.open(url, "_blank");
+  return !!win;
+}
+
+// ===================== Mesin pengingat otomatis =====================
+function todayName(){ return HARI_BY_JSDAY[new Date().getDay()]; }
+
+function jadwalHariIniList(){
+  return state.jadwal
+    .filter(j=>j.hari===todayName())
+    .map(j=>({...j, guru: guruById(j.guruId)}))
+    .filter(j=>j.guru)
+    .sort((a,b)=>a.jamMulai.localeCompare(b.jamMulai));
+}
+
+function minutesFromHHMM(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*60+m;
+}
+
+function tickAutoEngine(){
+  if(!state.auto.enabled) return;
+  const nowMin = minutesFromHHMM(nowHHMM());
+  const offset = Number(state.auto.offsetMinutes)||0;
+  const tKey = todayKey();
+  let changed = false;
+  jadwalHariIniList().forEach(j=>{
+    const targetMin = minutesFromHHMM(j.jamMulai) - offset;
+    const logKey = `${j.id}|${tKey}`;
+    if(state.firedLog[logKey]) return;
+    // jendela toleransi 1 menit karena timer jalan tiap 20 detik
+    if(nowMin === targetMin){
+      state.firedLog[logKey] = true;
+      changed = true;
+      triggerReminder(j);
+    }
+  });
+  if(changed) saveState(state);
+}
+
+function triggerReminder(j){
+  const hari = todayName();
+  if(ui.notifPermission === "granted" && typeof Notification!=="undefined"){
+    try{
+      new Notification("Pengingat jadwal mengajar", {
+        body: `${j.guru.nama} \u2013 ${j.kelas} (${j.jamMulai})`,
+      });
+    }catch(e){}
+  }
+  const opened = kirimWA(j.guru, j, hari, false);
+  const time = nowHHMM();
+  ui.autoLog.unshift(`${time} \u2013 ${j.guru.nama} (${j.kelas}) ${opened ? "terkirim ke jendela WA" : "diblokir browser, tap tombol di bawah"}`);
+  ui.autoLog = ui.autoLog.slice(0, 20);
+  if(!opened){
+    ui.pending.push(j);
+  }
+  render();
+}
+
+function sendPending(j){
+  kirimWA(j.guru, j, todayName(), true);
+  ui.pending = ui.pending.filter(p=>p.id!==j.id);
+  render();
+}
+
+function requestNotifPermission(){
+  if(typeof Notification==="undefined"){ ui.notifPermission="unsupported"; render(); return; }
+  Notification.requestPermission().then(p=>{ ui.notifPermission=p; render(); });
+}
+
+function toggleAuto(){
+  state.auto.enabled = !state.auto.enabled;
+  persist();
+}
+function setOffset(v){
+  state.auto.offsetMinutes = v;
+  persist();
+}
+
+setInterval(tickAutoEngine, 20000);
+
+// ===================== Render =====================
+function setTab(t){ ui.tab = t; render(); }
+
+function Header(){
+  const d = new Date();
+  const tanggal = d.toLocaleDateString("id-ID",{ day:"numeric", month:"long", year:"numeric" });
+  return `
+  <header class="header">
+    <div>
+      <div class="chalk-title">Papan Jadwal Guru</div>
+      <div class="sub-title">Hari ini <b style="color:#E8B94E">${todayName()}</b>, ${tanggal}</div>
+    </div>
+    <div class="badge">${ICON.check} ${ui.saved ? "Tersimpan di perangkat ini" : "Gagal menyimpan"}</div>
+  </header>`;
+}
+
+function TabBar(){
+  const tabs = [
+    { id:"dashboard", label:"Hari Ini", icon:ICON.calendar },
+    { id:"guru", label:"Data Guru", icon:ICON.users },
+    { id:"jadwal", label:"Jadwal", icon:ICON.clock },
+    { id:"pesan", label:"Pesan WA", icon:ICON.settings },
+    { id:"otomatis", label:"Otomatis", icon:ICON.bell },
+  ];
+  return `<nav class="tab-bar">${tabs.map(t=>`
+    <button class="tab-btn ${ui.tab===t.id?'active':''}" onclick="setTab('${t.id}')">${t.icon}${t.label}</button>
+  `).join("")}</nav>`;
+}
+
+function PendingBanner(){
+  if(ui.pending.length===0) return "";
+  return `<div class="pending-banner">
+    <div>${ICON.warn} ${ui.pending.length} pengingat otomatis menunggu 1 tap (browser memblokir buka tab otomatis).</div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      ${ui.pending.map(p=>`<button class="primary-btn" onclick="sendPendingById('${p.id}')">${ICON.send} Kirim ke ${esc(p.guru.nama)}</button>`).join("")}
+    </div>
+  </div>`;
+}
+window.sendPendingById = (id)=>{ const j = ui.pending.find(p=>p.id===id); if(j) sendPending(j); };
+
+function DashboardTab(){
+  const items = jadwalHariIniList();
+  if(items.length===0){
+    return `<div class="empty-state">${ICON.calendar}
+      <p>Tidak ada jadwal mengajar untuk hari ${todayName()}.</p>
+      <p style="font-size:13px;color:#8FA3B3">Tambahkan jadwal di tab "Jadwal" agar muncul di sini.</p>
+    </div>`;
+  }
+  return `
+    <div class="row-between">
+      <h2 class="section-title">Guru dengan jadwal hari ${todayName()} (${items.length})</h2>
+      <button class="primary-btn chalk-btn" onclick="kirimSemua()">${ICON.send} Kirim WA ke Semua</button>
+    </div>
+    <div class="card-grid">
+      ${items.map(item=>`
+        <div class="card chalk-card">
+          <div class="card-top">
+            <div class="avatar">${esc((item.guru.nama||"?").trim().charAt(0).toUpperCase())}</div>
+            <div>
+              <div class="card-name">${esc(item.guru.nama)}</div>
+              <div class="card-sub">${ICON.book} ${esc(item.guru.mapel||"-")}</div>
+            </div>
+          </div>
+          <div class="card-detail">${ICON.clock} ${esc(item.jamMulai)}\u2013${esc(item.jamSelesai)}</div>
+          <div class="card-detail">Kelas ${esc(item.kelas)}</div>
+          ${item.ruang ? `<div class="card-detail">${ICON.pin} ${esc(item.ruang)}</div>` : ""}
+          <button class="wa-btn chalk-btn" onclick="kirimWAbyId('${item.id}')">${ICON.msg} Kirim WA</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+window.kirimWAbyId = (id)=>{ const j = jadwalHariIniList().find(x=>x.id===id); if(j) kirimWA(j.guru, j, todayName(), true); };
+window.kirimSemua = async ()=>{
+  const items = jadwalHariIniList();
+  for(const item of items){
+    kirimWA(item.guru, item, todayName(), true);
+    await new Promise(r=>setTimeout(r,600));
+  }
+};
+
+function GuruTab(){
+  const f = ui.guruForm;
+  return `
+    <div class="form-card">
+      <h2 class="section-title">${ui.editingGuruId ? "Ubah data guru" : "Tambah guru"}</h2>
+      <div class="form-grid">
+        <input class="field" placeholder="Nama guru" value="${esc(f.nama)}" oninput="ui.guruForm.nama=this.value" />
+        <input class="field" placeholder="No. WhatsApp (contoh 08123456789)" value="${esc(f.noHp)}" oninput="ui.guruForm.noHp=this.value" />
+        <input class="field" placeholder="Mata pelajaran" value="${esc(f.mapel)}" oninput="ui.guruForm.mapel=this.value" />
+      </div>
+      ${ui.guruFormError ? `<div class="form-error">${ICON.warn} ${esc(ui.guruFormError)}</div>` : ""}
+      <div class="form-actions">
+        <button class="primary-btn chalk-btn" onclick="submitGuru()">${ICON.plus} ${ui.editingGuruId ? "Simpan perubahan" : "Tambah guru"}</button>
+        ${ui.editingGuruId ? `<button class="ghost-btn" onclick="cancelGuru()">${ICON.x} Batal</button>` : ""}
+      </div>
+    </div>
+    <h2 class="section-title">Daftar guru (${state.guru.length})</h2>
+    ${state.guru.length===0 ? `<div class="empty-state">${ICON.users}<p>Belum ada data guru.</p></div>` : `
+      <div class="list">
+        ${state.guru.map(g=>`
+          <div class="list-row">
+            <div class="avatar">${esc((g.nama||"?").trim().charAt(0).toUpperCase())}</div>
+            <div style="flex:1">
+              <div class="card-name">${esc(g.nama)}</div>
+              <div class="card-sub">${esc(g.mapel||"-")} &middot; ${esc(g.noHp)}</div>
+            </div>
+            <button class="icon-btn" onclick="editGuru('${g.id}')">${ICON.pencil}</button>
+            <button class="icon-btn danger" onclick="deleteGuru('${g.id}')">${ICON.trash}</button>
+          </div>
+        `).join("")}
+      </div>
+    `}
+  `;
+}
+
+function JadwalTab(){
+  const f = ui.jadwalForm;
+  return `
+    <div class="form-card">
+      <h2 class="section-title">${ui.editingJadwalId ? "Ubah jadwal" : "Tambah jadwal"}</h2>
+      ${state.guru.length===0 ? `<div class="form-error">${ICON.warn} Belum ada data guru. Tambahkan guru dulu di tab "Data Guru".</div>` : ""}
+      <div class="form-grid">
+        <select class="field" onchange="ui.jadwalForm.guruId=this.value">
+          <option value="">Pilih guru</option>
+          ${state.guru.map(g=>`<option value="${g.id}" ${f.guruId===g.id?'selected':''}>${esc(g.nama)}</option>`).join("")}
+        </select>
+        <select class="field" onchange="ui.jadwalForm.hari=this.value">
+          ${HARI_LIST.map(h=>`<option value="${h}" ${f.hari===h?'selected':''}>${h}</option>`).join("")}
+        </select>
+        <input type="time" class="field" value="${esc(f.jamMulai)}" oninput="ui.jadwalForm.jamMulai=this.value" />
+        <input type="time" class="field" value="${esc(f.jamSelesai)}" oninput="ui.jadwalForm.jamSelesai=this.value" />
+        <input class="field" placeholder="Kelas (contoh X TKJ 1)" value="${esc(f.kelas)}" oninput="ui.jadwalForm.kelas=this.value" />
+        <input class="field" placeholder="Ruang (opsional)" value="${esc(f.ruang)}" oninput="ui.jadwalForm.ruang=this.value" />
+      </div>
+      ${ui.jadwalFormError ? `<div class="form-error">${ICON.warn} ${esc(ui.jadwalFormError)}</div>` : ""}
+      <div class="form-actions">
+        <button class="primary-btn chalk-btn" onclick="submitJadwal()">${ICON.plus} ${ui.editingJadwalId ? "Simpan perubahan" : "Tambah jadwal"}</button>
+        ${ui.editingJadwalId ? `<button class="ghost-btn" onclick="cancelJadwal()">${ICON.x} Batal</button>` : ""}
+      </div>
+    </div>
+    <h2 class="section-title">Semua jadwal (${state.jadwal.length})</h2>
+    ${HARI_LIST.map(hari=>{
+      const items = state.jadwal.filter(j=>j.hari===hari).sort((a,b)=>a.jamMulai.localeCompare(b.jamMulai));
+      if(items.length===0) return "";
+      return `<div style="margin-bottom:18px">
+        <div class="day-label">${hari}</div>
+        <div class="list">
+          ${items.map(j=>{
+            const g = guruById(j.guruId);
+            return `<div class="list-row">
+              <div style="flex:1">
+                <div class="card-name">${g ? esc(g.nama) : "(guru dihapus)"}</div>
+                <div class="card-sub">${esc(j.jamMulai)}\u2013${esc(j.jamSelesai)} &middot; Kelas ${esc(j.kelas)}${j.ruang ? ` \u00b7 ${esc(j.ruang)}` : ""}</div>
+              </div>
+              <button class="icon-btn" onclick="editJadwal('${j.id}')">${ICON.pencil}</button>
+              <button class="icon-btn danger" onclick="deleteJadwal('${j.id}')">${ICON.trash}</button>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    }).join("")}
+  `;
+}
+
+function PesanTab(){
+  const preview = buildMessage(ui.templateDraft, { nama:"Siti Aminah", mapel:"Matematika" }, { jamMulai:"07:00", jamSelesai:"08:30", kelas:"X TKJ 1", ruang:"R.12" }, todayName());
+  return `
+    <div class="form-card">
+      <h2 class="section-title">Template pesan WhatsApp</h2>
+      <p class="help-text">Gunakan placeholder: {nama} {mapel} {hari} {jam} {kelas} {ruang}</p>
+      <textarea class="field" rows="8" oninput="ui.templateDraft=this.value">${esc(ui.templateDraft)}</textarea>
+      <div class="form-actions">
+        <button class="primary-btn chalk-btn" onclick="saveTemplate()">${ICON.check} Simpan template</button>
+      </div>
+    </div>
+    <h2 class="section-title">Pratinjau</h2>
+    <div class="preview-box">${esc(preview)}</div>
+  `;
+}
+
+function OtomatisTab(){
+  return `
+    <div class="info-box">${ICON.warn} WhatsApp tidak mengizinkan aplikasi lain menekan tombol "Kirim" di dalam chat-nya secara otomatis. Fitur di bawah ini otomatis MENYIAPKAN dan MEMBUKA chat WA pada jam yang ditentukan &mdash; tap "Kirim" terakhir tetap dilakukan manual di WhatsApp. Ini bukan keterbatasan aplikasi ini, tapi kebijakan WhatsApp untuk mencegah spam.</div>
+
+    <div class="form-card">
+      <h2 class="section-title">Pengingat otomatis</h2>
+      <div class="toggle-row">
+        <div>
+          <div class="card-name">Aktifkan pengingat otomatis</div>
+          <div class="card-sub">Selama halaman ini terbuka di browser/HP, sistem akan otomatis membuka chat WA setiap jadwal tiba.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" ${state.auto.enabled?'checked':''} onchange="toggleAuto()" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="margin-top:14px">
+        <label class="help-text" style="display:block;margin-bottom:6px">Kirim berapa menit sebelum jam mulai?</label>
+        <select class="field" style="max-width:220px" onchange="setOffset(this.value)">
+          ${[0,5,10,15,30].map(v=>`<option value="${v}" ${Number(state.auto.offsetMinutes)===v?'selected':''}>${v===0?"Tepat saat jam mulai":v+" menit sebelumnya"}</option>`).join("")}
+        </select>
+      </div>
+      <div style="margin-top:14px">
+        <button class="ghost-btn" onclick="requestNotifPermission()">${ICON.bell} ${ui.notifPermission==='granted' ? 'Notifikasi aktif' : 'Aktifkan notifikasi pengingat'}</button>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2 class="section-title">Riwayat pengingat otomatis hari ini</h2>
+      <div class="log-box">
+        ${ui.autoLog.length===0 ? '<div class="log-item">Belum ada pengingat yang terpicu.</div>' : ui.autoLog.map(l=>`<div class="log-item">${esc(l)}</div>`).join("")}
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2 class="section-title">Supaya benar-benar berjalan sendiri di Android</h2>
+      <p class="help-text" style="margin-bottom:8px">Agar pengingat tetap berjalan meski HP terkunci atau app lain dibuka, lakukan ini di HP Android:</p>
+      <ul style="font-size:13px;color:#C7D3DC;line-height:1.7;margin:0 0 10px 18px;padding:0">
+        <li>Buka halaman ini lewat Chrome, lalu tap menu &rarr; <b>"Tambahkan ke layar Utama"</b> supaya ada ikon aplikasi sendiri.</li>
+        <li>Di setelan Android, matikan <b>"Optimisasi baterai"</b> khusus untuk Chrome/aplikasi ini agar tidak dihentikan sistem di latar belakang.</li>
+        <li>Biarkan tab/aplikasi ini tetap terbuka saat jam-jam pelajaran &mdash; ini yang membuat timer pengingat tetap jalan.</li>
+      </ul>
+    </div>
+  `;
+}
+
+function render(){
+  const root = document.getElementById("root");
+  root.innerHTML = `
+    <div class="app">
+      ${Header()}
+      ${TabBar()}
+      <main class="main">
+        ${PendingBanner()}
+        ${ui.tab==="dashboard" ? DashboardTab() : ""}
+        ${ui.tab==="guru" ? GuruTab() : ""}
+        ${ui.tab==="jadwal" ? JadwalTab() : ""}
+        ${ui.tab==="pesan" ? PesanTab() : ""}
+        ${ui.tab==="otomatis" ? OtomatisTab() : ""}
+      </main>
+      <footer class="footer">
+        Catatan: tombol kirim membuka chat WhatsApp dengan pesan yang sudah terisi otomatis &mdash; tap "Kirim" di WhatsApp tetap dilakukan sendiri (aturan WhatsApp, bukan batasan aplikasi ini). Semua data disimpan hanya di HP/browser ini (localStorage), tidak dikirim ke server manapun.
+      </footer>
+    </div>
+  `;
+}
+
+window.setTab = setTab;
+window.submitGuru = submitGuru;
+window.editGuru = editGuru;
+window.cancelGuru = cancelGuru;
+window.deleteGuru = deleteGuru;
+window.submitJadwal = submitJadwal;
+window.editJadwal = editJadwal;
+window.cancelJadwal = cancelJadwal;
+window.deleteJadwal = deleteJadwal;
+window.saveTemplate = saveTemplate;
+window.toggleAuto = toggleAuto;
+window.setOffset = setOffset;
+window.requestNotifPermission = requestNotifPermission;
+
+render();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
